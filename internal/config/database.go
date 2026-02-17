@@ -25,6 +25,12 @@ func NewDB() (*sql.DB, error) {
 		return  nil, err
 	}
 
+	// tes ping ke database
+	err = db.Ping()
+    if err != nil {
+        return nil, err 
+    }
+
 	db.SetMaxIdleConns(5)
 	db.SetMaxOpenConns(20)
 	db.SetConnMaxLifetime(60 * time.Minute) // 60 menit
