@@ -1,0 +1,30 @@
+# Ignore env files
+.env
+*.env
+
+# Binaries and executables
+bin/
+main
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Application logs
+logs/
+*.log
+
+# Testing and coverage
+*.test
+*.out
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Operating System
+.DS_Store
+Thumbs.db
