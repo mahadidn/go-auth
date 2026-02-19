@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"golang-auth/internal/domain"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -51,11 +52,88 @@ func (u *userRepository) Create(ctx context.Context, user *domain.User) error {
 // cari berdasarkan id
 func (u *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	
-	// query := `SELECT id, username, email, created_at, updated_at`
+	res := &domain.User{}
 	
-	user := &domain.User{}
+	// konversi uuid ke bytes
+	binID, _ := id.MarshalBinary()
+	
+	// query pertama: ambil data user
+	queryUser := `SELECT id, username, email, created_at, updated_at FROM users WHERE id = ?`
+	var userBinId []byte
+	err := u.db.QueryRowContext(ctx, queryUser, binID).Scan(
+		&userBinId,
+		&res.Username,
+		&res.Email,
+		&res.CreatedAt,
+		&res.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("user not found")
+		}
+		return  nil, err
+	}
+	res.ID, _ = uuid.FromBytes(userBinId)
 
-	return user, nil
+	// query kedua: ambil role user
+	queryRole := `SELECT r.id, r.name FROM roles as r
+				  JOIN user_has_roles as uhr ON r.id = uhr.role_id
+				  WHERE uhr.user_id = ?`
+	rowsR, err := u.db.QueryContext(ctx, queryRole, binID)
+	if err != nil {
+		return nil, err
+	}
+	defer rowsR.Close()
+
+	for rowsR.Next() {
+		var role domain.Role
+		var roleBinId []byte
+		err := rowsR.Scan(
+			&roleBinId,
+			&role.Name,
+		)
+		if err != nil {
+			return nil, err
+		}
+		// konversi id ke uuid
+		role.ID, _ = uuid.FromBytes(roleBinId)
+
+		// append roles ke user
+		res.Roles = append(res.Roles, role)
+	}
+	if err = rowsR.Err(); err != nil {
+		return nil, err
+	}
+
+	// query ketiga: ambil permission user
+	queryPermission := `SELECT p.id, p.name FROM permissions as p
+						JOIN user_has_permissions as uhp ON p.id = uhp.permission_id
+						WHERE uhp.user_id = ?`
+	rowsP, err := u.db.QueryContext(ctx, queryPermission, binID)
+	if err != nil {
+		return nil, err
+	}
+	defer rowsP.Close()
+
+	for rowsP.Next() {
+		var permission domain.Permission
+		var permissionBinId []byte
+		err := rowsP.Scan(
+			&permissionBinId,
+			&permission.Name,
+		)
+		if err != nil {
+			return nil, err
+		}
+		permission.ID, _ = uuid.FromBytes(permissionBinId)
+
+		res.Permissions = append(res.Permissions, permission)
+	}
+	if err = rowsP.Err(); err != nil {
+		return nil, err
+	}
+	
+	return res, nil
 }
 
 // cari berdasarkan email
@@ -147,21 +225,41 @@ func (u *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
 // tambah role
 func (u *userRepository) AddRole(ctx context.Context, userID uuid.UUID, roleID uuid.UUID) error {
 	
+	query := `INSERT INTO user_has_roles (user_id, role_id) VALUES (?, ?)`
 
-	return  nil
+	// konversi kedua ID
+	userBinId, _ := userID.MarshalBinary()
+	roleBinId, _ := roleID.MarshalBinary()
+
+	// eksekusi
+	_, err := u.db.ExecContext(ctx, query, userBinId, roleBinId)
+
+	return  err
 }
 
 // hapus role
 func (u *userRepository) RemoveRole(ctx context.Context, userID uuid.UUID, roleID uuid.UUID) error {
 	
+	query := `DELETE FROM user_has_roles WHERE user_id = ? AND role_id = ?`
 
-	return  nil
+	userBinId, _ := userID.MarshalBinary()
+	roleBinId, _ := roleID.MarshalBinary()
+
+	res, err := u.db.ExecContext(ctx, query, userBinId, roleBinId)
+	if err == nil {
+		rows, _ := res.RowsAffected()
+		if rows == 0 {
+			return errors.New("relation not found")
+		}
+	}
+
+	return  err
 }
 
 // ubah password
 func (u *userRepository) ChangePassword(ctx context.Context, id uuid.UUID ,newPassword string) error {
 
-	query := `UPDATE users SET password = ? WHERE id = ?`
+	query := `UPDATE users SET password = ?, updated_at = ? WHERE id = ?`
 
 	// ubah uuid ke format mysql
 	idBytes, err := id.MarshalBinary()
@@ -169,7 +267,11 @@ func (u *userRepository) ChangePassword(ctx context.Context, id uuid.UUID ,newPa
 		return  err
 	}
 
-	res, err := u.db.ExecContext(ctx, query, idBytes)
+	res, err := u.db.ExecContext(ctx, query, 
+		newPassword,
+		time.Now(),
+		idBytes,
+	)
 
 	if err == nil {
 		rows, _ := res.RowsAffected()
