@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,14 +14,17 @@ type Role struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type RoleWithUsers struct {
-    ID    uuid.UUID `json:"id"`
-    Name  string    `json:"name"`
-    Users []User    `json:"users"` 
+type RoleWithUsersAndPermissions struct {
+	ID 			uuid.UUID 	 `json:"id"`
+	Name 		string 		 `json:"name"`
+	Users 		[]User 		 `json:"users"`
+	Permissions []Permission `json:"permissions"`
 }
 
-type RoleWithPermissions struct {
-	ID 			uuid.UUID	 `json:"id"`
-	Name 		string		 `json:"name"`
-	Permissions []Permission `json:"permissions"`
+type RoleRepository interface {
+	Create(ctx context.Context, r *Role) error
+	FindById(ctx context.Context, id uuid.UUID) (*RoleWithUsersAndPermissions, error)
+	FindAll(ctx context.Context) ([]Role, error)
+	Update(ctx context.Context, r *Role) error
+	Delete(ctx context.Context, id uuid.UUID) error
 }
