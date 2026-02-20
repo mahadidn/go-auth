@@ -54,10 +54,12 @@ func (service *roleService) Create(ctx context.Context, reqRole domain.RoleCreat
 		return err
 	}
 
-	// assign permission ke role
-	err = repoTx.AssignPermission(ctx, uuid7, reqRole.PermissionIDs)
-	if err != nil {
-		return err
+	// assign permission ke role (kalau ada isinya, jalani query-nya)
+	if len(reqRole.PermissionIDs) > 0 {
+		err = repoTx.AssignPermission(ctx, uuid7, reqRole.PermissionIDs)
+		if err != nil {
+			return err
+		}
 	}
 
 	return tx.Commit()
@@ -105,13 +107,24 @@ func (service *roleService) Update(ctx context.Context, req domain.RoleUpdateReq
 }
 
 func (service *roleService) FindById(ctx context.Context, id uuid.UUID) (*domain.RoleWithUsersAndPermissions, error) {
-	return nil, nil
+	
+	res, err := service.roleRepository.FindById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	
+	return res, nil
 }
 
 func (service *roleService) FindAll(ctx context.Context) ([]domain.Role, error) {
-	return nil, nil
+	res, err := service.roleRepository.FindAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func (service *roleService) Delete(ctx context.Context, id uuid.UUID) error {
-	return nil
+	err := service.roleRepository.Delete(ctx, id)
+	return err
 }

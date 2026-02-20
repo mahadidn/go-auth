@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"golang-auth/internal/domain"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,7 +13,7 @@ import (
 
 // definisikan struct secara private
 type userRepository struct {
-	db *sql.DB
+	db DBTX
 }
 
 
@@ -20,6 +21,12 @@ type userRepository struct {
 func NewUserRepository(db *sql.DB) domain.UserRepository {
 	return &userRepository{
 		db: db,
+	}
+}
+
+func (u *userRepository) WithTx(tx *sql.Tx) domain.UserRepository {
+	return &userRepository{
+		db: tx,
 	}
 }
 
@@ -153,7 +160,7 @@ func (u *userRepository) FindByEmail(ctx context.Context, email string) (*domain
 	if err != nil {
 		// not found error
 		if err == sql.ErrNoRows {
-			return  nil, errors.New("User not found")
+			return  nil, sql.ErrNoRows // kembalikan error aslinya agar mudah di cek
 		}
 		// error tak terduga
 		return nil, err
@@ -223,35 +230,87 @@ func (u *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // tambah role
-func (u *userRepository) AddRole(ctx context.Context, userID uuid.UUID, roleID uuid.UUID) error {
+func (u *userRepository) AssignRoles(ctx context.Context, userID uuid.UUID, roleIDs []uuid.UUID) error {
 	
-	query := `INSERT INTO user_has_roles (user_id, role_id) VALUES (?, ?)`
+	if len(roleIDs) == 0 {
+		return nil
+	}
+
+	query := `INSERT INTO user_has_roles (user_id, role_id) VALUES `
 
 	// konversi kedua ID
 	userBinId, _ := userID.MarshalBinary()
-	roleBinId, _ := roleID.MarshalBinary()
+
+	// pre-allocation slice
+	values := make([]interface{}, 0, len(roleIDs)*2) // * 2 karna butuh user_id dan role_id
+	placeHolders := make([]string, 0, len(roleIDs))
+
+	for _, rID := range roleIDs {
+		placeHolders = append(placeHolders, "(?, ?)")
+
+		roleBinID, _ := rID.MarshalBinary()
+		values = append(values, userBinId, roleBinID)
+	}
+
+	query += strings.Join(placeHolders, ", ")
 
 	// eksekusi
-	_, err := u.db.ExecContext(ctx, query, userBinId, roleBinId)
+	_, err := u.db.ExecContext(ctx, query, values...)
 
 	return  err
 }
 
 // hapus role
-func (u *userRepository) RemoveRole(ctx context.Context, userID uuid.UUID, roleID uuid.UUID) error {
+func (u *userRepository) RemoveAllRoles(ctx context.Context, userID uuid.UUID) error {
 	
-	query := `DELETE FROM user_has_roles WHERE user_id = ? AND role_id = ?`
+	query := `DELETE FROM user_has_roles WHERE user_id = ?`
 
 	userBinId, _ := userID.MarshalBinary()
-	roleBinId, _ := roleID.MarshalBinary()
 
-	res, err := u.db.ExecContext(ctx, query, userBinId, roleBinId)
-	if err == nil {
-		rows, _ := res.RowsAffected()
-		if rows == 0 {
-			return errors.New("relation not found")
-		}
+	_, err := u.db.ExecContext(ctx, query, userBinId)
+
+	return  err
+}
+
+// tambah permissions
+func (u *userRepository) AssignPermissions(ctx context.Context, userID uuid.UUID, permissionIDs []uuid.UUID) error {
+	
+	if len(permissionIDs) == 0 {
+		return nil
 	}
+
+	query := `INSERT INTO user_has_permissions (user_id, permission_id) VALUES `
+
+	// konversi kedua ID
+	userBinId, _ := userID.MarshalBinary()
+
+	// pre-allocation slice
+	values := make([]interface{}, 0, len(permissionIDs)*2) // * 2 karna butuh user_id dan permission_id
+	placeHolders := make([]string, 0, len(permissionIDs))
+
+	for _, pID := range permissionIDs {
+		placeHolders = append(placeHolders, "(?, ?)")
+
+		permBinID, _ := pID.MarshalBinary()
+		values = append(values, userBinId, permBinID)
+	}
+
+	query += strings.Join(placeHolders, ", ")
+
+	// eksekusi
+	_, err := u.db.ExecContext(ctx, query, values...)
+
+	return  err
+}
+
+// hapus permissions
+func (u *userRepository) RemoveAllPermissions(ctx context.Context, userID uuid.UUID) error {
+	
+	query := `DELETE FROM user_has_permissions WHERE user_id = ?`
+
+	userBinId, _ := userID.MarshalBinary()
+
+	_, err := u.db.ExecContext(ctx, query, userBinId)
 
 	return  err
 }
