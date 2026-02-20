@@ -24,3 +24,8 @@ type PermissionRepository interface {
     GetPermissionsByUserID(ctx context.Context, userID uuid.UUID) ([]string, error)
 	GetPermissionsByRoleID(ctx context.Context, roleID uuid.UUID) ([]string, error)
 }
+
+type PermissionService interface {
+	FindAll(ctx context.Context) ([]Permission, error)
+	GetPermissionsByUserID(ctx context.Context, userID uuid.UUID) ([]string, error)
+}

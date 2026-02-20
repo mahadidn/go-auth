@@ -5,17 +5,24 @@ import (
 	"database/sql"
 	"errors"
 	"golang-auth/internal/domain"
+	"strings"
 
 	"github.com/google/uuid"
 )
 
 type roleRepository struct {
-	db *sql.DB
+	db DBTX
 }
 
 func NewRoleRepository(db *sql.DB) domain.RoleRepository {
 	return &roleRepository{
 		db: db,
+	}
+}
+
+func (repo *roleRepository) WithTx(tx *sql.Tx) domain.RoleRepository {
+	return &roleRepository{
+		db: tx,
 	}
 }
 
@@ -214,4 +221,42 @@ func (repo *roleRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+func (repo *roleRepository) AssignPermission(ctx context.Context, roleID uuid.UUID, permIDs []uuid.UUID) error {
+	if len(permIDs) == 0 {
+		return nil
+	}
 
+	query := `INSERT INTO role_has_permissions (role_id, permission_id) VALUES `
+
+	// pre-allocation
+	values := make([]interface{}, 0, len(permIDs) * 2) // *2 karena 1 role, 1 perm
+	placeHolders := make([]string, 0, len(permIDs))
+
+	roleBin, _ := roleID.MarshalBinary()
+
+	// bangun string (?, ?) sebanyak jumlah permIDs
+	for _, pID := range permIDs {
+		placeHolders = append(placeHolders, "(?, ?)")
+
+		permBin, _ := pID.MarshalBinary()
+		values = append(values, roleBin, permBin)
+	}
+
+	// gabungkan query dasar dengan semua placeholder
+	query += strings.Join(placeHolders, ", ")
+
+	// eksekusi query
+	_, err := repo.db.ExecContext(ctx, query, values...)
+
+	return err
+}
+
+func (repo *roleRepository) RemoveAllPermissions(ctx context.Context, roleID uuid.UUID) error {
+	query := `DELETE FROM role_has_permissions WHERE role_id = ?`
+
+	roleBinID, _ := roleID.MarshalBinary()
+
+	_, err := repo.db.ExecContext(ctx, query, roleBinID)
+
+	return err
+}
