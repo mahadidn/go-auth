@@ -1,11 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"golang-auth/internal/config"
+	"golang-auth/internal/handler"
+	"golang-auth/internal/middleware"
 	"golang-auth/internal/pkg/logger"
+	"golang-auth/internal/repository"
+	"golang-auth/internal/service"
 	"log"
 	"log/slog"
+	"net/http"
+	"os"
+	"strings"
 
+	"github.com/go-playground/validator/v10"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 )
@@ -29,4 +38,60 @@ func main()  {
 	}
 	defer db.Close()
 
+	// inisialisasi validator
+	validate := validator.New()
+
+	// wiring repository
+	userRepo := repository.NewUserRepository(db)
+	tokenRepo := repository.NewPersonalAccessTokenRepository(db)
+
+	// wiring service
+	userService := service.NewUserService(userRepo, db, validate)
+	tokenService := service.NewPersonalAccessTokenService(tokenRepo, db, validate)
+
+	// wiring handler & middleware
+	authHandler := handler.NewAuthHandler(userService, tokenService)
+	userHandler := handler.NewUserHandler(userService)
+	authMiddleware := middleware.NewAuthMiddleware(tokenService)
+
+	// routing mux utama (publik)
+	mux := http.NewServeMux()
+	// route publik
+	// mux.HandleFunc("GET /api/v1/", authHandler.TesPing)
+	mux.HandleFunc("POST /api/v1/register", userHandler.Register)
+	mux.HandleFunc("POST /api/v1/login", authHandler.Login)
+
+	// route terproteksi middleware
+	Group(mux, "/api/v1/", authMiddleware.Authenticate, func(subMux *http.ServeMux) {
+		subMux.HandleFunc("POST /logout", authHandler.Logout)
+		subMux.HandleFunc("GET /user", userHandler.Profile)
+	})
+
+	port := os.Getenv("APP_PORT")
+	if port == ""{
+		port = "8000"
+	}
+
+	fmt.Println("Server running", "port", port)
+
+	server := &http.Server{
+		Addr: ":" + port,
+		Handler: mux,
+	}
+
+	if err := server.ListenAndServe(); err != nil {
+		slog.Error("Server stopped", "error", err)
+	}
+
+}
+
+func Group(mux *http.ServeMux, prefix string, middleware func(http.Handler) http.Handler, route func(subMux *http.ServeMux)) {
+    // buat mux kecil baru
+	subMux := http.NewServeMux()
+
+	// jalankan fungsi callback untuk mendaftarkan route didalam group
+	route(subMux)
+
+	// pasang submux ke mux utama dengan middleware
+	mux.Handle(prefix, http.StripPrefix(strings.TrimSuffix(prefix, "/"), middleware(subMux)))
 }

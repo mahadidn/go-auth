@@ -21,6 +21,8 @@ A backend REST API, following Clean Architecture principles. This project is des
 │   ├── config/              # Konfigurasi Database & Environment
 │   ├── domain/              # Model data & Interface (Kontrak)
 │   ├── handler/             # Layer HTTP (Transport)
+│   ├── helper/              # Helper
+│   ├── middleware/          # Layer Middleware
 │   ├── service/             # Layer Bisnis Logika
 │   ├── repository/          # Layer Database (Raw SQL)
 │   └── pkg/

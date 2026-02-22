@@ -13,8 +13,8 @@ type User struct {
 	Username    string 	     `json:"username"`
 	Email       string 	     `json:"email"`
 	Password    string 	     `json:"-"`
-	Roles       []Role       `json:"roles,omitempty"`
-	Permissions []Permission `json:"permissions,omitempty"`
+	Roles       []Role       `json:"roles"`
+	Permissions []Permission `json:"permissions"`
 	CreatedAt   time.Time    `json:"created_at"`
 	UpdatedAt   time.Time    `json:"updated_at"`
 }
@@ -24,16 +24,22 @@ type UserCreateRequest struct {
 	Username	string		`json:"username" validate:"required,min=3,max=50"`
 	Email		string  	`json:"email" validate:"required,email"`
 	Password	string  	`json:"password" validate:"required,min=6"`
-	RoleIDs		[]uuid.UUID `json:"role_ids" validate:"omitempty,dive,uuid7"`
-	PermissionIDs []uuid.UUID `json:"permission_ids" validate:"omitempty,dive,uuid7"`
+	RoleIDs		[]uuid.UUID `json:"role_ids" validate:"omitempty,dive,uuid"`
+	PermissionIDs []uuid.UUID `json:"permission_ids" validate:"omitempty,dive,uuid"`
+}
+
+type UserRegisterRequest struct {
+	Username	string		`json:"username" validate:"required,min=3,max=50"`
+	Email		string  	`json:"email" validate:"required,email"`
+	Password	string  	`json:"password" validate:"required,min=6"`
 }
 
 type UserUpdateRequest struct {
 	ID		 uuid.UUID   `json:"-"`
 	Username string	     `json:"username" validate:"required,min=3,max=50"`
 	Email 	 string		 `json:"email" validate:"required,email"`
-	RoleIDs  []uuid.UUID `json:"role_ids" validate:"omitempty,dive,uuid7"`
-	PermissionIDs []uuid.UUID `json:"permission_ids" validate:"omitempty,dive,uuid7"`
+	RoleIDs  []uuid.UUID `json:"role_ids" validate:"omitempty,dive,uuid"`
+	PermissionIDs []uuid.UUID `json:"permission_ids" validate:"omitempty,dive,uuid"`
 }
 
 type UserChangePasswordRequest struct {

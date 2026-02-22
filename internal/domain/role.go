@@ -25,13 +25,13 @@ type RoleWithUsersAndPermissions struct {
 // DTO untuk request create, update
 type RoleCreateRequest struct {
 	Name		  string		`json:"name" validate:"required,min=3,max=100"`		
-	PermissionIDs []uuid.UUID	`json:"permission_ids" validate:"required,dive,uuid7"`
+	PermissionIDs []uuid.UUID	`json:"permission_ids" validate:"required,dive,uuid"`
 }
 
 type RoleUpdateRequest struct {
-	ID		uuid.UUID			`json:"-" validate:"required,uuid7"`
+	ID		uuid.UUID			`json:"-" validate:"required,uuid"`
 	Name	string				`json:"name" validate:"required,min=3,max=100"`
-	PermissionIDs []uuid.UUID	`json:"permission_ids" validate:"required,dive,uuid7"`
+	PermissionIDs []uuid.UUID	`json:"permission_ids" validate:"required,dive,uuid"`
 }
 
 // repository interface

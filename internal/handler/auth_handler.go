@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"golang-auth/internal/domain"
 	"golang-auth/internal/helper"
+	"golang-auth/internal/middleware"
 	"net/http"
-	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -23,6 +23,11 @@ func NewAuthHandler(userService domain.UserService, tokenService domain.Personal
 	}
 }
 
+// tes api
+func (h *AuthHandler) TesPing(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	helper.ResponseOK(w, "Success")
+}
 
 // method login
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +56,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// cek password request dan password asli
-	err = bcrypt.CompareHashAndPassword([]byte(loginRequest.Password), []byte(user.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginRequest.Password))
 	if err != nil {
 		helper.ResponseUnauthorized(w, "Email atau password salah")
 		return
@@ -80,17 +85,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 // method logout
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	// Ambil dari header Authorization
-	authHeader := r.Header.Get("Authorization")
-
-	// cek apakah headernya kosong atau formatnya bukan "Bearer <token>"
-	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer "){
-		helper.ResponseUnauthorized(w, "Token tidak ditemukan atau format salah")
-		return
-	}
-
-	// Potong tulisan "Bearer " (pajang 7 karakter termasuk spasi)
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	
+	// langsung ambil saja, karena middleware sudah menjamin data ini valid
+    // tokenString := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+	tokenString := r.Context().Value(middleware.TokenContextKey).(string)
 
 	// lempar ke service untuk dihapus dari database
 	err := h.tokenService.Delete(r.Context(), tokenString)

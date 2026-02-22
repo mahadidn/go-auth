@@ -18,7 +18,7 @@ type PersonalAccessToken struct {
 }
 
 type PersonalAccessTokenRequest struct {
-	UserID 	   uuid.UUID  `json:"user_id" validate:"required,uuid7"`
+	UserID 	   uuid.UUID  `json:"user_id" validate:"required,uuid"`
 	TokenName      string 	  `json:"token" validate:"required,min=3,max=100"`
 }
 
