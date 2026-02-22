@@ -36,17 +36,17 @@ func generateSecureToken(length int) (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-func (service *personalAccessTokenService) Create(ctx context.Context, req domain.PersonalAccessTokenRequest) (string, error) {
+func (service *personalAccessTokenService) Create(ctx context.Context, req domain.PersonalAccessTokenRequest) (string, time.Time, error) {
 	// validasi struct
 	if err := service.validate.Struct(req); err != nil {
-		return "", err
+		return "", time.Time{}, err
 	}
 
 	// generate raw token
 	// 32 bytes akan menghasilkan 64 karakter string hex
 	randomStr, err := generateSecureToken(32)
 	if err != nil {
-		return "", err
+		return "", time.Time{}, err
 	}
 
 	// tambahkan prefix agar token mudah diidentifikasi
@@ -61,21 +61,25 @@ func (service *personalAccessTokenService) Create(ctx context.Context, req domai
 	tokenID, _ := uuid.NewV7()
 	now := time.Now()
 
+	// expires at
+	expiresAt := time.Now().Add(time.Hour * 48) // set token expire 2 hari
+
 	entity := &domain.PersonalAccessToken{
 		ID: tokenID,
 		TokenHash: hashedToken,
 		UserID: req.UserID,
 		TokenName: req.TokenName,
 		CreatedAt: now,
+		ExpiresAt: &expiresAt,
 	}
 
 	// simpan ke database
 	err = service.personalAccessTokenRepository.Create(ctx, entity)
 	if err != nil {
-		return "", err
+		return "", time.Time{}, err
 	}
 	
-	return rawToken, nil
+	return rawToken, expiresAt, nil
 }
 
 func (service *personalAccessTokenService) FindByToken(ctx context.Context, token string) (*domain.PersonalAccessToken, error) {

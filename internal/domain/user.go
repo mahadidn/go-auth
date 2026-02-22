@@ -44,6 +44,19 @@ type UserChangePasswordRequest struct {
     ConfirmPassword string `json:"confirm_password" validate:"required,eqfield=NewPassword"`
 }
 
+type UserLoginRequest struct {
+	Email	 string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=3,max=100"`
+}
+
+type UserLoginResponse struct {
+	Id 		  string 	`json:"id"`
+	Username  string 	`json:"username"`
+	Email 	  string 	`json:"email"`
+	Token 	  string 	`json:"token"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
 type UserRepository interface {
 	Create(ctx context.Context, u *User) error
 	FindByID(ctx context.Context, id uuid.UUID) (*User, error)

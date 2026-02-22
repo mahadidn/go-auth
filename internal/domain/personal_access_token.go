@@ -41,7 +41,7 @@ type PersonalAccessTokenRepository interface {
 }
 
 type PersonalAccessTokenService interface {
-    Create(ctx context.Context, req PersonalAccessTokenRequest) (string, error)
+    Create(ctx context.Context, req PersonalAccessTokenRequest) (string, time.Time, error)
     FindByToken(ctx context.Context, token string) (*PersonalAccessToken, error)
     Delete(ctx context.Context, token string) error
     DeleteByUserID(ctx context.Context, userID uuid.UUID) error

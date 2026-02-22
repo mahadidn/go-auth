@@ -146,7 +146,7 @@ func (u *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Us
 // cari berdasarkan email
 func (u *userRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
 	
-	query := `SELECT id, password FROM users WHERE email = ?`
+	query := `SELECT id, username, email, password FROM users WHERE email = ?`
 
 	var user domain.User
 	var binID []byte
@@ -154,6 +154,8 @@ func (u *userRepository) FindByEmail(ctx context.Context, email string) (*domain
 	// gunakan queryrowcontext
 	err := u.db.QueryRowContext(ctx, query, email).Scan(
 		&binID,
+		&user.Username,
+		&user.Email,
 		&user.Password,
 	)
 	// cek apakah user ditemukan
