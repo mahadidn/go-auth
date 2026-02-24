@@ -41,6 +41,7 @@ type RoleRepository interface {
     RemoveAllPermissions(ctx context.Context, roleID uuid.UUID) error
 	FindById(ctx context.Context, id uuid.UUID) (*RoleWithUsersAndPermissions, error)
 	FindAll(ctx context.Context) ([]Role, error)
+	GetRoleByUserID(ctx context.Context, userID uuid.UUID) ([]string, error)
 	Update(ctx context.Context, r *Role) error
 	Delete(ctx context.Context, id uuid.UUID) error
 
@@ -53,5 +54,6 @@ type RoleService interface {
 	Update(ctx context.Context, req RoleUpdateRequest) error
 	FindById(ctx context.Context, id uuid.UUID) (*RoleWithUsersAndPermissions, error)
 	FindAll(ctx context.Context) ([]Role, error)
+	GetRoleByUserID(ctx context.Context, userID uuid.UUID) ([]string, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }

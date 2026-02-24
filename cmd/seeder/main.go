@@ -29,7 +29,7 @@ func main() {
 	defer db.Close() // Pastikan koneksi ditutup setelah seeder selesai
 
 	// 2. Jalankan fungsi Seeder
-	seeder.SeedPermissions(db)
+	seeder.SeedPermissionsAndSuperadmin(db)
 
 	// Nanti kalau ada seeder lain, tinggal panggil di sini:
 	// seeder.SeedRoles(db)

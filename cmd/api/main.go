@@ -61,6 +61,7 @@ func main()  {
 	roleHandler := handler.NewRoleHandler(roleService)
 
 	authMiddleware := middleware.NewAuthMiddleware(tokenService)
+	permMiddleware := middleware.NewPermissionMiddleware(permissionService, roleService)
 
 	// routing mux utama (publik)
 	mux := http.NewServeMux()
@@ -74,14 +75,17 @@ func main()  {
 		subMux.HandleFunc("POST /logout", authHandler.Logout)
 		subMux.HandleFunc("GET /user", userHandler.Profile)
 
-		subMux.HandleFunc("GET /roles", roleHandler.FindAll)
-		subMux.HandleFunc("GET /roles/{id}", roleHandler.FindByID)
-		subMux.HandleFunc("POST /roles", roleHandler.Create)
-		subMux.HandleFunc("PUT /roles/{id}", roleHandler.Update)
-		subMux.HandleFunc("DELETE /roles/{id}", roleHandler.Delete)
+		subMux.HandleFunc("PUT /user/{id}/roles", userHandler.AssignRole)
+		subMux.HandleFunc("PUT /user/{id}/permissions", userHandler.AssignPermission)
 
-		subMux.HandleFunc("GET /permissions", permissionHandler.FindAll)
-		subMux.HandleFunc("GET /permissions/user/{id}", permissionHandler.FindByUserID)
+		subMux.HandleFunc("GET /roles", permMiddleware.Require("roles:view", roleHandler.FindAll))
+        subMux.HandleFunc("GET /roles/{id}", permMiddleware.Require("roles:view", roleHandler.FindByID))
+        subMux.HandleFunc("POST /roles", permMiddleware.Require("roles:manage", roleHandler.Create))
+        subMux.HandleFunc("PUT /roles/{id}", permMiddleware.Require("roles:manage", roleHandler.Update))
+        subMux.HandleFunc("DELETE /roles/{id}", permMiddleware.Require("roles:manage", roleHandler.Delete))
+
+        subMux.HandleFunc("GET /permissions", permMiddleware.Require("permissions:view", permissionHandler.FindAll))
+        subMux.HandleFunc("GET /permissions/user/{id}", permMiddleware.Require("permissions:view", permissionHandler.FindByUserID))
 	})
 
 	port := os.Getenv("APP_PORT")

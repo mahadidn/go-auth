@@ -39,6 +39,11 @@ func ResponseUnauthorized(w http.ResponseWriter, data any) {
     WriteJSON(w, http.StatusUnauthorized, "Unauthorized", data)
 }
 
+// Helper Khusus Auth Error (403 Unauthorized)
+func ResponseForbidden(w http.ResponseWriter, data any) {
+    WriteJSON(w, http.StatusForbidden, "Forbidden", data)
+}
+
 // Helper Khusus Server Error (500 Internal Server Error)
 func ResponseInternalError(w http.ResponseWriter, data any) {
     WriteJSON(w, http.StatusInternalServerError, "Internal Server Error", data)

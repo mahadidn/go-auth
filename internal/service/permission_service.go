@@ -28,3 +28,6 @@ func (service permissionService) GetPermissionsByUserID(ctx context.Context, use
 	return service.permissionRepository.GetPermissionsByUserID(ctx, userID)
 }
 
+func (service permissionService) GetPermissionsByRoleIDs(ctx context.Context, roleID []uuid.UUID) ([]string, error) {
+	return service.permissionRepository.GetPermissionsByRoleIDs(ctx, roleID)
+}

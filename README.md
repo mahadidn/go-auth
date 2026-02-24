@@ -15,8 +15,10 @@ A backend REST API, following Clean Architecture principles. This project is des
 ```text
 .
 ├── cmd/
-│   └── api/
-│       └── main.go          # Entry point aplikasi
+│   ├── api/
+│   │   └── main.go          # Entry point aplikasi
+│   └── seeder/
+│       └── main.go          # Untuk menjalankan seeder
 ├── internal/
 │   ├── config/              # Konfigurasi Database & Environment
 │   ├── domain/              # Model data & Interface (Kontrak)
@@ -25,6 +27,7 @@ A backend REST API, following Clean Architecture principles. This project is des
 │   ├── middleware/          # Layer Middleware
 │   ├── service/             # Layer Bisnis Logika
 │   ├── repository/          # Layer Database (Raw SQL)
+│   ├── seeder/              # Database Seeder
 │   └── pkg/
 │       └── logger/          # Custom Daily Log Writer
 ├── logs/                    # Folder penyimpanan log (.log)

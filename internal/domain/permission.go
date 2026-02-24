@@ -22,10 +22,11 @@ type PermissionRepository interface {
     // baik dari Role maupun Direct Permission
 	// return list permission aja
     GetPermissionsByUserID(ctx context.Context, userID uuid.UUID) ([]string, error)
-	GetPermissionsByRoleID(ctx context.Context, roleID uuid.UUID) ([]string, error)
+	GetPermissionsByRoleIDs(ctx context.Context, roleIDs []uuid.UUID) ([]string, error)
 }
 
 type PermissionService interface {
 	FindAll(ctx context.Context) ([]Permission, error)
 	GetPermissionsByUserID(ctx context.Context, userID uuid.UUID) ([]string, error)
+	GetPermissionsByRoleIDs(ctx context.Context, roleIDs []uuid.UUID) ([]string, error)
 }

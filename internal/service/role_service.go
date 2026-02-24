@@ -124,6 +124,14 @@ func (service *roleService) FindAll(ctx context.Context) ([]domain.Role, error) 
 	return res, nil
 }
 
+func (service *roleService) GetRoleByUserID(ctx context.Context, userID uuid.UUID) ([]string, error) {
+	res, err := service.roleRepository.GetRoleByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (service *roleService) Delete(ctx context.Context, id uuid.UUID) error {
 	err := service.roleRepository.Delete(ctx, id)
 	return err

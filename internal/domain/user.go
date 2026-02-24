@@ -38,8 +38,6 @@ type UserUpdateRequest struct {
 	ID		 uuid.UUID   `json:"-"`
 	Username string	     `json:"username" validate:"required,min=3,max=50"`
 	Email 	 string		 `json:"email" validate:"required,email"`
-	RoleIDs  []uuid.UUID `json:"role_ids" validate:"omitempty,dive,uuid"`
-	PermissionIDs []uuid.UUID `json:"permission_ids" validate:"omitempty,dive,uuid"`
 }
 
 type UserChangePasswordRequest struct {
@@ -61,6 +59,16 @@ type UserLoginResponse struct {
 	Email 	  string 	`json:"email"`
 	Token 	  string 	`json:"token"`
 	ExpiresAt time.Time `json:"expires_at"`
+}
+
+type AssignRoleRequest struct {
+	ID	uuid.UUID `json:"-"`
+	RoleIDs  []uuid.UUID `json:"role_ids" validate:"omitempty,dive,uuid"`
+}
+
+type AssignPermissionRequest struct {
+	ID uuid.UUID `json:"-"`
+	PermissionIDs []uuid.UUID `json:"permission_ids" validate:"omitempty,dive,uuid"`
 }
 
 type UserRepository interface {
@@ -88,6 +96,8 @@ type UserRepository interface {
 type UserService interface {
 	Create(ctx context.Context, req UserCreateRequest) error
 	Update(ctx context.Context, req UserUpdateRequest) error
+	AssignRoles(ctx context.Context, id uuid.UUID, req AssignRoleRequest) error
+	AssignPermissions(ctx context.Context, id uuid.UUID, req AssignPermissionRequest) error
 	FindByID(ctx context.Context, id uuid.UUID) (*User, error)
 	FindByEmail(ctx context.Context, email string) (*User, error)
 	Delete(ctx context.Context, id uuid.UUID) error

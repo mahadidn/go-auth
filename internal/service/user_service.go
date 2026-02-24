@@ -128,26 +128,61 @@ func (service *userService) Update(ctx context.Context, req domain.UserUpdateReq
 		return err
 	}
 
+	return tx.Commit()
+}
+
+func (service *userService) AssignRoles(ctx context.Context, id uuid.UUID, req domain.AssignRoleRequest) error {
+	
+	err := service.validate.Struct(req)
+	if err != nil {
+		return err
+	}
+
+	tx, err := service.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	repoTx := service.userRepository.WithTx(tx)
+	
 	// remove all roles
-	err = repoTx.RemoveAllRoles(ctx, req.ID)
+	err = repoTx.RemoveAllRoles(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	// add all roles
-	err = repoTx.AssignRoles(ctx, req.ID, req.RoleIDs)
+	err = repoTx.AssignRoles(ctx, id, req.RoleIDs)
 	if err != nil {
 		return err
 	}
 
+	return tx.Commit()
+}
+
+func (service *userService) AssignPermissions(ctx context.Context, id uuid.UUID, req domain.AssignPermissionRequest) error {
+	err := service.validate.Struct(req)
+	if err != nil {
+		return err
+	}
+
+	tx, err := service.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	repoTx := service.userRepository.WithTx(tx)
+	
 	// remove all permission
-	err = repoTx.RemoveAllPermissions(ctx, req.ID)
+	err = repoTx.RemoveAllPermissions(ctx, id)
 	if err != nil {
 		return err
 	}
 	
 	// add all permission
-	err = repoTx.AssignPermissions(ctx, req.ID, req.PermissionIDs)
+	err = repoTx.AssignPermissions(ctx, id, req.PermissionIDs)
 	if err != nil {
 		return err
 	}

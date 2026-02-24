@@ -62,3 +62,60 @@ func (h *UserHandler) Profile(w http.ResponseWriter, r *http.Request){
 	helper.ResponseOK(w, user)
 
 }
+
+// update
+func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
+	
+
+}
+
+// assign role
+func (h *UserHandler) AssignRole(w http.ResponseWriter, r *http.Request) {
+	
+	userIDStr := r.PathValue("id")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		helper.ResponseBadRequest(w, "Format ID User tidak valid")
+		return
+	}
+
+	assignRoleReq := &domain.AssignRoleRequest{}
+	err = json.NewDecoder(r.Body).Decode(assignRoleReq)
+	if err != nil {
+		helper.ResponseBadRequest(w, "Format JSON tidak valid")
+		return
+	}
+
+	err = h.userService.AssignRoles(r.Context(), userID, *assignRoleReq)
+	if err != nil {
+		helper.ResponseBadRequest(w, helper.TranslateError(err))
+		return
+	}
+
+	helper.ResponseCreated(w, "Role pada user berhasil diubah")
+}
+
+func (h *UserHandler) AssignPermission(w http.ResponseWriter, r *http.Request) {
+	
+	userIDStr := r.PathValue("id")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		helper.ResponseBadRequest(w, "Format ID User tidak valid")
+		return
+	}
+
+	assignPermReq := &domain.AssignPermissionRequest{}
+	err = json.NewDecoder(r.Body).Decode(assignPermReq)
+	if err != nil {
+		helper.ResponseBadRequest(w, "Format JSON tidak valid")
+		return
+	}
+
+	err = h.userService.AssignPermissions(r.Context(), userID, *assignPermReq)
+	if err != nil {
+		helper.ResponseBadRequest(w, helper.TranslateError(err))
+		return
+	}
+
+	helper.ResponseCreated(w, "Permission pada user berhasil diubah")
+}

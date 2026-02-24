@@ -175,6 +175,35 @@ func (repo *roleRepository) FindAll(ctx context.Context) ([]domain.Role, error) 
 	return roles, nil
 }
 
+func (repo *roleRepository) GetRoleByUserID(ctx context.Context, userID uuid.UUID) ([]string, error) {
+	
+	userBinID, _ := userID.MarshalBinary()
+	
+	queryRole := `SELECT r.name FROM roles as r
+				  JOIN user_has_roles as uhr ON r.id = uhr.role_id
+				  WHERE uhr.user_id = ?`
+	
+	rows, err := repo.db.QueryContext(ctx, queryRole, userBinID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var roles []string
+	for rows.Next() {
+		var role string
+		err := rows.Scan(
+			&role,
+		)
+		if err != nil {
+			return nil, err
+		}
+		roles = append(roles, role)
+	}
+
+	return roles, nil
+}
+
 func (repo *roleRepository) Update(ctx context.Context, role *domain.Role) error {
 	
 	query := `UPDATE roles SET name = ?, updated_at = ? WHERE id = ?`
