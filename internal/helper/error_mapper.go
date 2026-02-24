@@ -95,7 +95,7 @@ func FormatValidationError(ve validator.ValidationErrors) map[string]string {
 			result[field] = fmt.Sprintf("Minimal harus %s karakter", param)
 		case "max":
 			result[field] = fmt.Sprintf("Maksimal %s karakter saja", param)
-		case "uuid7":
+		case "uuid":
 			result[field] = "Format ID tidak valid"
 		default:
 			// Jika ada tag lain yang belum terdaftar tapi punya param
