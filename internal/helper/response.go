@@ -30,16 +30,16 @@ func ResponseCreated(w http.ResponseWriter, data any) {
 }
 
 // Helper Khusus Client Error (400 Bad Request)
-func ResponseBadRequest(w http.ResponseWriter, message string) {
-    WriteJSON(w, http.StatusBadRequest, "Bad Request", message)
+func ResponseBadRequest(w http.ResponseWriter, data any) {
+    WriteJSON(w, http.StatusBadRequest, "Bad Request", data)
 }
 
 // Helper Khusus Auth Error (401 Unauthorized)
-func ResponseUnauthorized(w http.ResponseWriter, message string) {
-    WriteJSON(w, http.StatusUnauthorized, "Unauthorized", message)
+func ResponseUnauthorized(w http.ResponseWriter, data any) {
+    WriteJSON(w, http.StatusUnauthorized, "Unauthorized", data)
 }
 
 // Helper Khusus Server Error (500 Internal Server Error)
-func ResponseInternalError(w http.ResponseWriter, message string) {
-    WriteJSON(w, http.StatusInternalServerError, "Internal Server Error", message)
+func ResponseInternalError(w http.ResponseWriter, data any) {
+    WriteJSON(w, http.StatusInternalServerError, "Internal Server Error", data)
 }

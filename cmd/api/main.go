@@ -60,6 +60,12 @@ func main()  {
 	// mux.HandleFunc("GET /api/v1/", authHandler.TesPing)
 	mux.HandleFunc("POST /api/v1/register", userHandler.Register)
 	mux.HandleFunc("POST /api/v1/login", authHandler.Login)
+	// Route untuk ngetes Panic (nanti dihapus aja kalau udah selesai ngetes)
+	mux.HandleFunc("GET /api/v1/test-panic", func(w http.ResponseWriter, r *http.Request) {
+		slog.Info("Mencoba memanggil panic...")
+		// Sengaja bikin panic
+		panic("WADUH, DATABASE MELEDAK!")
+	})
 
 	// route terproteksi middleware
 	Group(mux, "/api/v1/", authMiddleware.Authenticate, func(subMux *http.ServeMux) {
@@ -74,9 +80,11 @@ func main()  {
 
 	fmt.Println("Server running", "port", port)
 
+	handlerWithRecovery := middleware.Recovery(mux)
+
 	server := &http.Server{
 		Addr: ":" + port,
-		Handler: mux,
+		Handler: handlerWithRecovery,
 	}
 
 	if err := server.ListenAndServe(); err != nil {

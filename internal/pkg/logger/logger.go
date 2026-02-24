@@ -20,7 +20,7 @@ func SetupLogger(){
 
 	// Masukkan writer kita ke handler slog
 	handler := slog.NewJSONHandler(writer, &slog.HandlerOptions{
-		Level: slog.LevelError,
+		Level: slog.LevelInfo,
 	})
 
 	logger := slog.New(handler)

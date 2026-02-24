@@ -38,7 +38,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request){
 	// service
 	err = h.userService.Create(r.Context(), createUserReq)
 	if err != nil {
-		helper.ResponseBadRequest(w, err.Error())
+		helper.ResponseBadRequest(w, helper.TranslateError(err))
 		return
 	}
 
