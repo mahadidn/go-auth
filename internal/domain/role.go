@@ -29,7 +29,7 @@ type RoleCreateRequest struct {
 }
 
 type RoleUpdateRequest struct {
-	ID		uuid.UUID			`json:"-" validate:"required,uuid"`
+	ID		uuid.UUID			`json:"-"`
 	Name	string				`json:"name" validate:"required,min=3,max=100"`
 	PermissionIDs []uuid.UUID	`json:"permission_ids" validate:"required,dive,uuid"`
 }

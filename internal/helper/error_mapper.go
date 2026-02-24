@@ -82,7 +82,7 @@ func FormatValidationError(ve validator.ValidationErrors) map[string]string {
 	result := make(map[string]string)
 
 	for _, f := range ve {
-		field := strings.ToLower(f.Field())
+		field := f.Field()
 		tag := f.Tag()
 		param := f.Param()
 

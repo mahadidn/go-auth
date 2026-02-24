@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -39,19 +40,26 @@ func main()  {
 	defer db.Close()
 
 	// inisialisasi validator
-	validate := validator.New()
+	validate := NewValidator()
 
 	// wiring repository
 	userRepo := repository.NewUserRepository(db)
 	tokenRepo := repository.NewPersonalAccessTokenRepository(db)
+	permissionRepo := repository.NewPermissionRepository(db)
+	roleRepo := repository.NewRoleRepository(db)
 
 	// wiring service
 	userService := service.NewUserService(userRepo, db, validate)
 	tokenService := service.NewPersonalAccessTokenService(tokenRepo, db, validate)
+	permissionService := service.NewPermissionService(permissionRepo, db)
+	roleService := service.NewRoleService(roleRepo, db, validate)
 
 	// wiring handler & middleware
 	authHandler := handler.NewAuthHandler(userService, tokenService)
 	userHandler := handler.NewUserHandler(userService)
+	permissionHandler := handler.NewPermissionHandler(permissionService)
+	roleHandler := handler.NewRoleHandler(roleService)
+
 	authMiddleware := middleware.NewAuthMiddleware(tokenService)
 
 	// routing mux utama (publik)
@@ -60,17 +68,20 @@ func main()  {
 	// mux.HandleFunc("GET /api/v1/", authHandler.TesPing)
 	mux.HandleFunc("POST /api/v1/register", userHandler.Register)
 	mux.HandleFunc("POST /api/v1/login", authHandler.Login)
-	// Route untuk ngetes Panic (nanti dihapus aja kalau udah selesai ngetes)
-	mux.HandleFunc("GET /api/v1/test-panic", func(w http.ResponseWriter, r *http.Request) {
-		slog.Info("Mencoba memanggil panic...")
-		// Sengaja bikin panic
-		panic("WADUH, DATABASE MELEDAK!")
-	})
 
 	// route terproteksi middleware
 	Group(mux, "/api/v1/", authMiddleware.Authenticate, func(subMux *http.ServeMux) {
 		subMux.HandleFunc("POST /logout", authHandler.Logout)
 		subMux.HandleFunc("GET /user", userHandler.Profile)
+
+		subMux.HandleFunc("GET /roles", roleHandler.FindAll)
+		subMux.HandleFunc("GET /roles/{id}", roleHandler.FindByID)
+		subMux.HandleFunc("POST /roles", roleHandler.Create)
+		subMux.HandleFunc("PUT /roles/{id}", roleHandler.Update)
+		subMux.HandleFunc("DELETE /roles/{id}", roleHandler.Delete)
+
+		subMux.HandleFunc("GET /permissions", permissionHandler.FindAll)
+		subMux.HandleFunc("GET /permissions/user/{id}", permissionHandler.FindByUserID)
 	})
 
 	port := os.Getenv("APP_PORT")
@@ -102,4 +113,23 @@ func Group(mux *http.ServeMux, prefix string, middleware func(http.Handler) http
 
 	// pasang submux ke mux utama dengan middleware
 	mux.Handle(prefix, http.StripPrefix(strings.TrimSuffix(prefix, "/"), middleware(subMux)))
+}
+
+func NewValidator() *validator.Validate {
+	v := validator.New()
+
+	// Beritahu validator untuk memakai tag "json" sebagai nama field
+	v.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		// Ambil nilai dari tag json 
+		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		
+		// Abaikan jika tag json-nya adalah "-"
+		if name == "-" {
+			return ""
+		}
+		
+		return name
+	})
+
+	return v
 }
